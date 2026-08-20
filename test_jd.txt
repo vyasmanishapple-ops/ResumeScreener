@@ -1,0 +1,65 @@
+Position Title: Senior Software Developer
+Experience: 5–7 Years
+Location: Bengaluru, Karnataka, India / Hybrid
+Department: Product Engineering
+
+ROLE OVERVIEW
+
+We are looking for a Senior Software Developer to join our product engineering
+team and help build, enhance, and support business-critical web applications.
+The successful candidate will be comfortable working across the software
+development lifecycle, from understanding requirements and designing solutions
+through development, testing, deployment, and production support.
+
+This is a hands-on engineering position. The person will work closely with
+other developers, QA engineers, product managers, and technical leads.
+
+KEY RESPONSIBILITIES
+
+• Design, develop, test, and maintain production-quality software applications.
+• Translate functional requirements and product specifications into technical
+  solutions.
+• Develop REST APIs and integrate applications with internal and external
+  services.
+• Participate in code reviews and contribute to engineering standards.
+• Investigate production issues, identify root causes, and implement sustainable
+  fixes.
+• Write automated unit and integration tests for new and existing functionality.
+• Participate in sprint planning, backlog refinement, daily stand-ups, reviews,
+  and retrospectives.
+• Collaborate with Product, QA, UX, and DevOps teams to deliver features on
+  schedule.
+• Contribute to application performance, reliability, security, and
+  maintainability improvements.
+• Document technical decisions, APIs, deployment procedures, and operational
+  knowledge.
+
+REQUIRED QUALIFICATIONS
+
+• 5+ years of professional software development experience.
+• Strong experience developing production web applications.
+• Strong proficiency in at least one of Java, Python, C#, or TypeScript/JavaScript.
+• Experience developing RESTful APIs and integrating third-party or internal
+  services.
+• Experience with relational databases such as PostgreSQL, MySQL, or SQL Server.
+• Hands-on experience with Git and modern software development workflows.
+• Experience writing automated tests.
+• Practical experience working in Agile/Scrum development teams.
+• Strong debugging and problem-solving ability.
+• Good written and verbal communication skills.
+
+PREFERRED QUALIFICATIONS
+
+• Experience with React, Angular, or another modern frontend framework.
+• Experience with Docker and cloud platforms such as AWS or Azure.
+• Familiarity with CI/CD pipelines.
+• Experience with messaging systems such as Kafka or RabbitMQ.
+• Exposure to application monitoring and observability tools.
+• Bachelor's degree in Computer Science, Engineering, Information Technology,
+  or a related field.
+
+SUCCESS IN THIS ROLE
+
+Success will be measured by the quality and reliability of delivered software,
+ability to resolve complex engineering problems, contribution to team
+engineering practices, and ability to deliver commitments consistently.

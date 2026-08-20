@@ -1,0 +1,12 @@
+streamlit>=1.39,<2
+pdfplumber>=0.11,<1
+python-docx>=1.1,<2
+instructor>=1.7,<2
+openai>=1.50,<3
+pydantic>=2.8,<3
+PyYAML>=6,<7
+SQLAlchemy>=2,<3
+pytest>=8,<9
+Pillow>=10,<12
+pytesseract>=0.3.13,<1
+pdf2image>=1.17,<2

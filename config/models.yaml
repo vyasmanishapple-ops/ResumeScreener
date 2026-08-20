@@ -1,0 +1,5 @@
+models:
+  - qwen3-coder:30b
+  - qwen2.5-coder:32b
+  - llama3.2-vision:11b
+default_model: qwen3-coder:30b

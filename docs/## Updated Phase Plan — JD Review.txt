@@ -1,0 +1,116 @@
+## Updated Phase Plan — JD Review Model, with Bias & Compliance Safeguard inserted
+
+## Overview
+
+| Phase | Focus | Key issues closed | New tooling |
+|---|---|---|---|
+| A | Scoring/data-integrity correctness | OR-weight bug, ID/group determinism, weight-importance-skilltype consistency | none |
+| **B** | **Bias & compliance safeguards** | **No exclusion rules for protected-class-correlated signals, no adverse-impact visibility** | **none** |
+| C | Taxonomy anchoring | Category instability, TECH/FUNCTIONAL_SKILL boundary, PREFERRED_QUALIFICATION overlap | ESCO / O*NET |
+| D | Deterministic entity extraction | Remaining named-skill segmentation noise, gives Stage 2 a reusable extractor | GLiNER |
+| E | Non-entity segmentation rules | RESPONSIBILITY/SUCCESS_MEASURE/EXPERIENCE granularity, prose-list sections | none |
+| F | Category/classification cleanup | Hardcoded section headings, source_classification field, JD-metadata-vs-body distinction | none |
+| G | Recruiter review UX & persistence | Review fatigue, source-evidence visibility, JD model persistence, re-analyze overwrite | none |
+| H | JD model contract freeze | Formal schema handoff to Stage 2, diagnostic-as-CI-gate | none |
+
+---
+
+### Phase A — Scoring and data-integrity correctness (do first, blocks everything else)
+
+**Why first:** every later phase gets measured by re-running the stability diagnostic. If the diagnostic itself is being distorted by a scoring bug or non-deterministic IDs, no before/after comparison in later phases can be trusted.
+
+- OR-group weight normalization in `scoring_engine.py` (count each `relationship_group` once toward total weight, not once per member).
+- Deterministic Python-owned `requirement_id` / `relationship_group` generation + uniqueness validation.
+- Weight/Importance/Skill Type consistency enforcement (weight=0 ⇒ Not Required ⇒ skill_type=NONE, both directions).
+- Upgrade the stability diagnostic to report absolute weight sums per category, not just % share.
+
+**Stage 2 payoff:** candidate scoring directly consumes `total_weight`/`values` from this engine — fixing it now means Stage 2 never has to touch scoring math for JD-side reasons.
+
+---
+
+### Phase B — Bias & compliance safeguards *(new)*
+
+**Why here, not later:** this is a design constraint that should shape every matching/scoring decision made from this point forward, not something retrofitted after the architecture is set. Doing it before taxonomy/entity-extraction work means those phases get built with the constraint already in place, rather than needing a retrofit audit afterward.
+
+- Define and enforce an explicit exclusion list at the resume-extraction layer: signals that must never be used or derived, even indirectly — name-implied gender/ethnicity, graduation-year-implied age, address-implied socioeconomic/religious/caste signal (particularly relevant for the Indian market), photos if present in uploaded resumes.
+- Decide and document a deliberate stance on demographic data: either (a) never collect/store it at all, so there's structurally nothing to bias against, or (b) collect it separately from the scoring pipeline solely for adverse-impact reporting, never fed into matching. Pick one — right now this is an unmade decision, not a made one.
+- If (b): add a basic adverse-impact report — pass-rate by tracked category, per JD batch — reusing the audit-trail infrastructure already planned for Phase G rather than building new plumbing.
+- Add a written statement of the exclusion rules to the product's documentation/audit trail, so "why doesn't this system use X" has a citable answer if ever questioned.
+
+**Stage 2 payoff:** Stage 2's resume-evidence extraction and matching logic gets built against this constraint from day one, instead of needing every extraction/matching decision re-audited for bias exposure after the fact.
+
+---
+
+### Phase C — Taxonomy anchoring (ESCO / O*NET)
+
+**Why here:** structural fix for classification instability that prompt-tuning alone hasn't resolved after several rounds (TECH vs. FUNCTIONAL_SKILL, PREFERRED_QUALIFICATION overlap). Do this before further prompt work in E/F, since it may reduce what those phases actually need to solve.
+
+- Ingest ESCO and/or O*NET taxonomy data as local, offline reference sets (both open, downloadable, compatible with the "stays local" requirement).
+- Post-process each `TECHNICAL_SKILL`/`QUALIFICATION`/`CERTIFICATION` row through taxonomy lookup; store the resolved canonical code alongside the row (`taxonomy_code`, nullable).
+- Where a taxonomy match exists, use it to stabilize `category` rather than relying on LLM judgment for that row.
+- Re-run the 6x/2-JD diagnostic; expect meaningful shrinkage in TECH/FUNCTIONAL_SKILL variance.
+
+**Stage 2 payoff:** JD requirements carrying canonical taxonomy codes let Stage 2 do code-to-code comparison for named skills instead of pure fuzzy/LLM text matching — a materially stronger matching primitive, built once here.
+
+---
+
+### Phase D — Deterministic entity extraction (GLiNER)
+
+**Why after taxonomy:** GLiNER's output can be validated against the taxonomy codes established in Phase C, catching cases where the LLM missed or invented a skill.
+
+- Deploy GLiNER locally with a schema covering skills, tools, certifications, and numeric thresholds (years, team size, budget, etc.).
+- Run as a parallel validation pass against the LLM's output — flag mismatches for recruiter review, don't silently override.
+- JD-side only in this phase; do not point at resumes yet.
+
+**Stage 2 payoff:** the same GLiNER schema is designed to be pointed at resume text unchanged in Stage 2 — a single, consistent extraction mechanism for both sides of the match, fixing the current asymmetry between how JD text and resume text get processed.
+
+---
+
+### Phase E — Universal segmentation rules for non-entity content
+
+**Why here:** taxonomy and GLiNER only help the named-skill side of the JD. RESPONSIBILITY, SUCCESS_MEASURE, and EXPERIENCE-domain-list instability is duty/outcome-statement content with no taxonomy code and no extractable entity — this still needs dedicated segmentation work regardless of C/D.
+
+- Generalize the one-bullet-one-row rule from RESPONSIBILITY to the whole JD by default.
+- Add an explicit segmentation rule for non-bulleted, comma-separated prose sections (the Success Measures pattern).
+- Add Python-side source-bullet validation as a backstop (flag duplicate-source-bullet rows, flag rows spanning multiple bullets).
+- Re-run the 2-JD diagnostic; expect EXPERIENCE/SUCCESS_MEASURE/BEHAVIORAL to lock the way RESPONSIBILITY already has.
+
+**Stage 2 payoff:** stable structure for these categories means Stage 2's category-level score breakdown compares consistent structures across every JD, not structures that vary by how a given run happened to segment content.
+
+---
+
+### Phase F — Category/classification cleanup
+
+**Why here:** by this point, phases C–E should have resolved most content instability. This is the schema/prompt hygiene pass that locks the taxonomy in code and closes remaining edge cases.
+
+- Remove `PREFERRED_QUALIFICATION` from the category enum (superseded by taxonomy + `source_classification`).
+- Add the `source_classification` (REQUIRED/PREFERRED/INFORMATIONAL) field, separate from `category` and from recruiter-editable `Importance`.
+- Replace hardcoded JD-heading string matching with LLM-reported section headings; fix the metadata-header-vs-body-requirement distinction (location/work-arrangement must never come from the posting metadata block).
+- Re-evaluate TECH/FUNCTIONAL_SKILL: if variance is still meaningful after C+D+E, merge the two categories rather than keep chasing a boundary the model can't hold.
+
+**Stage 2 payoff:** a clean, final category taxonomy that Stage 2's category-level reporting and recruiter comparisons get designed against.
+
+---
+
+### Phase G — Recruiter review UX and persistence
+
+**Why here, not earlier:** the tiered review, bulk-edit, and anomaly-summary UX is much higher value once the underlying row counts/categories are trustworthy — building polished UX on top of still-unstable data makes the instability look more official, not less.
+
+- Tiered review (Must-Have / Scored / Nice-to-Have), collapsed OR-groups, category bulk-edit actions, rule-based anomaly summary.
+- Surface `source_text` in the review table (currently captured but never shown).
+- Persist the approved JD model as its own versioned DB entity, independent of candidate evaluation.
+- Warn before an "Analyze JD" re-run discards unsaved recruiter edits.
+
+**Stage 2 payoff:** persistence here produces the literal artifact — a durable, versioned, approved `JDAnalysis` — that Stage 2 evaluates candidates against.
+
+---
+
+### Phase H — JD model contract freeze (explicit handoff point to Stage 2)
+
+- Formally document the JD model schema as a stable contract: field list, types, taxonomy code semantics, what's recruiter-editable vs. AI-derived vs. Python-computed vs. bias-excluded.
+- Add the 2-JD, 6-run stability diagnostic as a standing regression check (CI-style) so future JD-parser changes that reintroduce instability are caught automatically.
+- Only at this point should Stage 2 design work begin against a concrete, versioned JD-model shape.
+
+---
+
+**Sequencing note carried forward:** re-run the diagnostic after each phase, not just at the end, so you know which fix is actually earning its keep before committing engineering time to the next one — same lesson the OR-weight bug taught when it turned out to explain more of the variance than several rounds of classification prompt-tuning did.

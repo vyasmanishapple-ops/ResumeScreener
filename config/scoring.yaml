@@ -1,0 +1,16 @@
+version: "2.0"
+evidence_scores:
+  EXPLICIT_MATCH: 1.0
+  PARTIAL_MATCH: 0.7
+  RELATED_EVIDENCE: 0.4
+  NO_EVIDENCE: 0.0
+  CONTRADICTED: 0.0
+thresholds:
+  strong_shortlist: 85
+  shortlist: 75
+  review: 60
+keyword_limits:
+  maximum_positive_adjustment: 10
+  maximum_negative_adjustment: -10
+gates:
+  failed_gate_recommendation: "DO NOT SHORTLIST"
